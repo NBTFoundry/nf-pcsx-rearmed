@@ -1,0 +1,37 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
+# The package description for tools/package.py (NBTFoundry/manager): one argument
+# per line. `make package` and the release workflow both use it; they add the
+# version, sequence, key, output and executable. Bridge 1.5: the discs and BIOS
+# files come through `files` (from a USB stick: the phone sends at most 64 MiB).
+--app
+pcsx
+--compat
+nbt_6.5_armv7
+--bridge
+1.5
+--bridge-uses
+show,controller,files
+--bridge-optional
+status,live-settings,gamepad
+--bridge-files
+cue,bin,img,iso,chd,pbp,m3u,mdf,mds,ccd,sub,sbi,toc,cbn,exe|2048|16384
+--setting
+aspect|Aspect|4-3|4-3,pixel,full
+--setting
+filter|Filter|sharp|sharp,smooth,nearest
+--setting
+region|Region|auto|auto,ntsc,pal
+--setting
+bios|BIOS|auto|auto,hle
+--setting
+dynarec|Dynarec|on|on,off
+--setting
+gpu_thread|GPU thread|auto|auto,on,off
+--setting
+frameskip|Frame skip|off|off,1,2
+--setting
+sound|Sound|on|on,off
+--setting
+show_fps|Show FPS|off|off,on
+--setting
+debug_log|Debug log|off|off,on
