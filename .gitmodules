@@ -1,3 +1,4 @@
 [submodule "third_party/pcsx_rearmed"]
 	path = third_party/pcsx_rearmed
-	url = git@github.com:notaz/pcsx_rearmed.git
+	url = git@github.com:NBTFoundry/pcsx_rearmed.git
+	branch = clang-asm

@@ -171,6 +171,29 @@ $(GUEST_BUNDLE): $(GUEST_APP) $(NBT_SDK_RUNNER)
 
 guest-bundle: $(GUEST_BUNDLE)
 
+# --- The guest in QNX 6.5 SP1 under QEMU (the SDK's tools/qnx65-vm; no GPU,
+# no sound: both faked): a health check, then the test disc of
+# tests/test_pcsx.py played through the ARM dynarec, which must map its
+# memory, draw frames and stop cleanly. ---
+VM_DISC := $(BUILD_DIR)/vm/Test.iso
+VM_PLAY := NBT_LAUNCH=user NBT_SURFACE=5 NBT_RUNNER_FAKE_GL=1 NBT_RUNNER_FAKE_AUDIO=1 \
+	NBT_DATA_DIR=/dev/shmem NBT_FILES_DIR=/proc/boot
+
+$(VM_DISC): tests/test_pcsx.py
+	@mkdir -p $(dir $@)
+	python3 -c 'import sys; sys.path.insert(0, "tests"); import test_pcsx; \
+		open(sys.argv[1], "wb").write(test_pcsx.iso_disc("TEST"))' $@
+
+vm-test: $(NBT_SDK_RUNNER) $(GUEST_APP) $(VM_DISC)
+	QEMU_RUN_SECS=180 $(NBT_SDK_ROOT)/tools/qnx65-vm/run.sh \
+		-c "NBT_LAUNCH=check NBT_DATA_DIR=/dev/shmem nbt-runner --nbt-payload /proc/boot/$(notdir $(GUEST_APP)) &" \
+		-c "waitfor /none 10" -c "slay -s TERM nbt-runner" -c "waitfor /none 3" \
+		-c "$(VM_PLAY) nbt-runner --nbt-payload /proc/boot/$(notdir $(GUEST_APP)) --game Test.iso &" \
+		-c "waitfor /none 60" -c "slay -s TERM nbt-runner" -c "waitfor /none 3" \
+		-x 'stage: check' -x 'game Test\.iso: ' -x 'core: Mapped' -x 'fake-gl: closed: [1-9][0-9]* frames' \
+		-x 'runner: guest exited status=0' \
+		$^
+
 # --- The signed package (release/package.args describes it) ---
 PACKAGE_INPUT ?= $(GUEST_BUNDLE)
 PACKAGE := $(BUILD_DIR)/pcsx-$(APP_VERSION).nbt
