@@ -37,7 +37,7 @@ jobs:
 
   release:
     needs: pins
-    uses: NBTFoundry/manager/.github/workflows/app-release.yml@324cf43cf486753e282e33d5d8625942245b7176 # manager main
+    uses: NBTFoundry/manager/.github/workflows/app-release.yml@dbb9706024a591243cde9456ff321a2bad2cf9e2 # manager main
     permissions:
       contents: write
       packages: read
