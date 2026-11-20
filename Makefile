@@ -41,8 +41,8 @@ core_lib = $(call core_dir,$(1))/$(CORE_LIB_NAME)
 # $(call core_build,kind,environment,make arguments)
 define core_build
 	@mkdir -p $(call core_dir,$(1))
-	rsync -a --delete --exclude .git --exclude '*.o' --exclude '*.a' --exclude /include/revision.h \
-		$(CORE_SRC)/ $(call core_dir,$(1))/
+	tar -C $(CORE_SRC) --exclude=.git --exclude='*.o' --exclude='*.a' --exclude=./include/revision.h -cf - . \
+		| tar -C $(call core_dir,$(1)) -xf -
 	cd $(call core_dir,$(1)) && GIT_DIR=$(CORE_GIT_DIR) $(2) $(MAKE) --no-print-directory -f Makefile.libretro \
 		$(CORE_MAKE_ARGS) $(3)
 endef

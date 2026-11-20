@@ -134,7 +134,7 @@ Debug log setting adds tracing and the core's debug messages.
 ## Build
 
 Needs the NBT App SDK next to this repository (`../sdk`, or `NBT_SDK_DIR`),
-gcc, Python 3, rsync, and the X11, EGL and GLESv2 development files; Xvfb for
+gcc, Python 3, and the X11, EGL and GLESv2 development files; Xvfb for
 the tests. `git submodule update --init` fetches PCSX ReARMed (not its own
 `libpicofe` submodule, which the libretro core does not use).
 
