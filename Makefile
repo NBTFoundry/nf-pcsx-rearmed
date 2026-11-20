@@ -209,6 +209,11 @@ package: $(PACKAGE_INPUT)
 		--output $(PACKAGE) \
 		$(PACKAGE_INPUT)
 
+# legal/NOTICE.txt (tools/make_notice.py): again when the pin, a bundled
+# library or the toolchain changes.
+notice:
+	NBT_SDK_DIR=$(NBT_SDK_ROOT) NBT_TOOLCHAIN=$(NBT_TOOLCHAIN) python3 tools/make_notice.py
+
 clean:
 	rm -rf $(BUILD_DIR)
 
