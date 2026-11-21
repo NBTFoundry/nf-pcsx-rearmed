@@ -2,7 +2,9 @@
 # The package description for tools/package.py (NBTFoundry/manager): one argument
 # per line. `make package` and the release workflow both use it; they add the
 # version, sequence, key, output and executable. Bridge 1.5: the discs and BIOS
-# files come through `files` (from a USB stick: the phone sends at most 64 MiB).
+# files come through `files` (from a USB stick: the phone sends at most 64 MiB);
+# `|folders=`: a folder or zip archive holding a playlist or a cue sheet (or
+# .ccd, .mds, .toc) is one game, imported whole.
 --app
 pcsx
 --compat
@@ -14,7 +16,7 @@ show,controller,files
 --bridge-optional
 status,live-settings,gamepad
 --bridge-files
-cue,bin,img,iso,chd,pbp,m3u,mdf,mds,ccd,sub,sbi,toc,cbn,exe|2048|16384
+cue,bin,img,iso,chd,pbp,m3u,mdf,mds,ccd,sub,sbi,toc,cbn,exe|2048|16384|folders=m3u,cue,ccd,mds,toc
 --setting
 aspect|Aspect|4-3|4-3,pixel,full
 --setting

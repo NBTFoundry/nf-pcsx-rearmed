@@ -306,7 +306,7 @@ class PackageTest(unittest.TestCase):
             raw = package.read_bytes()
             manifest = raw[24 : 24 + int.from_bytes(raw[8:12], "big")].decode("ascii")
             self.assertIn("bridge-files=cue,bin,img,iso,chd,pbp,m3u,mdf,mds,ccd,sub,sbi,toc,cbn,exe"
-                          "|2048|16384\n", manifest)
+                          "|2048|16384|folders=m3u,cue,ccd,mds,toc\n", manifest)
             for setting in ("region|Region|auto|auto,ntsc,pal", "bios|BIOS|auto|auto,hle",
                             "dynarec|Dynarec|on|on,off", "frameskip|Frame skip|off|off,1,2"):
                 self.assertIn(f"setting={setting}\n", manifest)

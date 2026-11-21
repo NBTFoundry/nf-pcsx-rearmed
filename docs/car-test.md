@@ -1,5 +1,5 @@
 <!-- SPDX-License-Identifier: GPL-2.0-or-later -->
-# Car test: PCSX ReARMed under NBT Manager (first test, guest build)
+# Car test: PCSX ReARMed under NBT Manager (third test, guest build)
 
 Parked, ignition on. About 45 minutes. Keep SSH/ENET recovery at hand.
 
@@ -9,13 +9,25 @@ appended, which it copies out and starts as its own process. PCSX ReARMed's
 ARM recompiler writes and runs code at run time: whether the car's QNX allows
 it is the main question, with the speed.
 
+The first run (0.0.2, kit dev120) passed the recompiler's own test, then
+showed a black screen that ignored BACK for 22 s; started again, it died with
+SIGILL in picolibc's `strcmp`, the only Thumb code in the guest with `strlen`
+and `memchr`. 0.0.3/0.0.4 are built with the SDK's ARM-state versions of the
+three, and the runner now logs the frames it presents.
+
+The second run (0.0.3/0.0.4) presented frames (`runner: 1274 frames presented`)
+but the screen stayed black: the GL stream's `glGetVertexAttribiv` copied four
+values into the front end's one, which turned off its text and menus. 0.0.5/0.0.6
+fix that (a desktop test now draws the front end through the stream on a real
+GPU). There is no sound at the game list itself: sound starts with a game.
+
 ## What you need
 
 - NBT Manager from test kit dev119 or later (it trusts the kit's `test-app`
   key and runs bridge 1.5 applications) and the phone app from the same kit,
   paired.
-- `build/car-test/`: `pcsx-0.0.1.nbt`, `pcsx-0.0.2.nbt` and `SHA256SUMS.txt`.
-  Copy both packages to the phone.
+- `build/car-test/` (in the kit folder: `pcsx-0.0.5.nbt`, `pcsx-0.0.6.nbt`
+  and `pcsx-0.0.5-SHA256SUMS.txt`). Copy both packages to the phone.
 - A USB stick with PlayStation discs you own: one game as `.cue` + `.bin`
   (or `.chd`), and if you have one, a game on two discs with an `.m3u` list
   of its discs (one file name per line, e.g. `Game (Disc 1).cue`). Optional:
@@ -26,11 +38,12 @@ it is the main question, with the speed.
 
 ## A. Install, health check, settings
 
-1. On the phone: import `pcsx-0.0.1.nbt`, send it to the car, approve on the
-   car. The manager runs its health check (about 10 s): install must succeed.
+1. On the phone: import `pcsx-0.0.5.nbt`, send it to the car, approve on the
+   car (an update of 0.0.4, or an install if you removed it). The manager
+   runs its health check (about 10 s): it must succeed.
 2. In the manager's menu, hold the push on **pcsx**: 10 settings (Aspect,
    Filter, Region, BIOS, Dynarec, GPU thread, Frame skip, Sound, Show FPS,
-   Debug log). Set **Show FPS: on**.
+   Debug log). Set **Show FPS: on** and **Debug log: on**.
 
 ## B. Discs, start and play
 
@@ -66,7 +79,7 @@ it is the main question, with the speed.
 1. In the manager, hold the push on **pcsx**, then **Stop**: the screen
    returns to iDrive.
 2. Start it again: the list focuses the last game played.
-3. While a game runs, send `pcsx-0.0.2.nbt` from the phone and approve: the
+3. While a game runs, send `pcsx-0.0.6.nbt` from the phone and approve: the
    update stops the running copy, runs the health check and installs. Start
    it again: saves and states are still there.
 
@@ -81,7 +94,9 @@ it is the main question, with the speed.
 ## Logs (before switching the car off: `/dev/shmem` is RAM)
 
 - The application's log: the phone app, **pcsx** → log. With **Debug log:
-  on**, it has the core's own messages. A crash shows as
+  on**, it has the core's own messages. `runner: 1 frames presented` means
+  the first frame reached the screen (a count follows every minute and at the
+  end); `runner: GL error 0x…` names the first GL error. A crash shows as
   `runner: guest killed by signal N` with the faulting address in
   `sloginfo` (`Process … (nbt-pcsx.guest) terminated SIG…`): copy both
   lines. `SIGBUS` there would mean an unaligned access, `SIGSEGV`/`SIGILL`

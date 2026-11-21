@@ -53,13 +53,45 @@ capability).
 
 - **From a USB stick** (discs are too big for the phone, which sends at most
   64 MiB): on the car, hold the push on PCSX ReARMed in NBT Manager, then
-  **Files** › **Import from a USB stick**: every file found (in folders too)
-  is listed, one or all of them copied to the car.
+  **Files** › **Import from a USB stick**. One game is a folder or an archive:
+  - a **folder** holding a game's files with its `.cue` sheet (or `.m3u`
+    list, `.ccd`, `.mds`, `.toc`): `Tekken 3/` with `Tekken 3.cue` and its
+    `.bin` tracks is listed as one entry, `Tekken 3/`, and copied whole;
+  - a **`.zip` archive** holding them is listed as `<archive name>/` and
+    unpacked into a folder of that name on the car (the head unit's disk has
+    the room; the stick is only read);
+  - single-file games (`.chd`, `.pbp`, `.iso`) are listed one by one, in a
+    folder or a zip too, as are BIOS files.
+  Choose one entry or **Import all**. On the car the Files page lists a game
+  folder as one entry; deleting it deletes the whole game.
 - **From the phone:** small files only (an `.m3u`, an `.sbi`, a BIOS file):
   the NBT Manager app, the car, PCSX ReARMed, **Files**, **Add files**.
 
-The game list shows the files that start a game; tracks, subchannel data and
-BIOS files are used but not listed.
+The game list shows one entry per game: a file that starts a game, or a game
+folder, which starts at its `.m3u` list, else its `.cue` sheet (or `.ccd`,
+`.mds`, `.toc`, `.cbn`), else its single image (`.chd`, `.pbp`, `.iso`,
+`.img`), else its first `.bin`. Tracks, subchannel data and BIOS files are used
+but not listed.
+
+### Compressed images (CHD and PBP)
+
+PCSX ReARMed reads two compressed formats itself, one file per disc, about
+half the size of a `.cue` and its tracks, with nothing to unpack:
+
+- **CHD** (MAME's compressed hunks), from a `.cue` or an `.iso` with MAME's
+  `chdman` (in the `mame-tools` package on Debian and Ubuntu, `mame` on
+  Homebrew, or `chdman.exe` from mamedev.org on Windows):
+  ```sh
+  chdman createcd -i "Tekken 3 (USA).cue" -o "Tekken 3 (USA).chd"
+  ```
+  A folder of them in one go (bash): `for c in *.cue; do chdman createcd -i
+  "$c" -o "${c%.cue}.chd"; done`. A game on several discs gets one `.chd` per
+  disc and an `.m3u` naming them, one per line.
+- **PBP** (the PSP's EBOOT format), from tools such as PSX2PSP or `popstationr`;
+  several discs fit in one `.pbp`.
+
+Copy the `.chd` or `.pbp` files to the stick, loose or in a folder: each is
+one game.
 
 **BIOS:** without one, PCSX ReARMed uses its own replacement (HLE), which runs
 most games. For better compatibility, add a BIOS dump of your console with the
@@ -126,7 +158,9 @@ Changed from the phone app or NBT Manager's settings page; they apply at once.
 
 The package declares bridge 1.5: `show`, `controller` and `files` required,
 `status`, `live-settings` and `gamepad` optional, and the files policy
-`cue,bin,img,iso,chd,pbp,m3u,mdf,mds,ccd,sub,sbi,toc,cbn,exe|2048|16384`.
+`cue,bin,img,iso,chd,pbp,m3u,mdf,mds,ccd,sub,sbi,toc,cbn,exe|2048|16384|folders=m3u,cue,ccd,mds,toc`
+(a folder or archive with one of those is one game, imported whole; this needs
+NBT Manager dev123 or later).
 PCSX ReARMed reports the game played as its status. NBT Manager keeps its
 standard error as its log (shown, shared and cleared from the phone app); the
 Debug log setting adds tracing and the core's debug messages.

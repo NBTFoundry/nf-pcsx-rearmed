@@ -14,6 +14,11 @@ namespace {
  * .sbi are read by the core, never started). */
 const char* const kExtensions[] = {"cue", "chd", "pbp", "m3u", "iso", "img",
                                    "mdf", "toc", "cbn", "exe", NULL};
+/* A game folder (a folder or zip archive with a playlist or cue sheet,
+ * imported whole: `|folders=` in release/package.args) opens at its playlist,
+ * else its cue sheet; the rest are fallbacks. */
+const char* const kFolderMains[] = {"m3u", "cue", "ccd", "mds", "toc", "cbn", "chd",
+                                    "pbp", "iso", "img", "bin", NULL};
 
 /* Manager settings feeding the core's variables (frontend/libretro_core_options.h):
  * setting value, core value. */
@@ -44,6 +49,7 @@ int main(int argc, char** argv) {
                                          sizeof(kVariables) / sizeof(kVariables[0]),
                                          4.0f / 3.0f,
                                          0 /* the core reads its discs itself */,
-                                         true /* BIOS files with the games */};
+                                         true /* BIOS files with the games */,
+                                         kFolderMains};
   return nbt::retro::run(argc, argv, config);
 }
