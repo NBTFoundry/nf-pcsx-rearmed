@@ -50,6 +50,7 @@ int main(int argc, char** argv) {
                                          4.0f / 3.0f,
                                          0 /* the core reads its discs itself */,
                                          true /* BIOS files with the games */,
-                                         kFolderMains};
+                                         kFolderMains,
+                                         NULL /* games listed by their file names */};
   return nbt::retro::run(argc, argv, config);
 }
