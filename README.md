@@ -156,11 +156,13 @@ Changed from the phone app or NBT Manager's settings page; they apply at once.
 
 ## Bridge
 
-The package declares bridge 1.5: `show`, `controller` and `files` required,
-`status`, `live-settings` and `gamepad` optional, and the files policy
+The package carries the guest (built without the QNX SDP, run by NBT
+Manager's `nbt-runner`) and declares bridge 1.7: `show`, `controller`, `files`
+and `runner` required, `status`, `live-settings` and `gamepad` optional, and
+the files policy
 `cue,bin,img,iso,chd,pbp,m3u,mdf,mds,ccd,sub,sbi,toc,cbn,exe|2048|16384|folders=m3u,cue,ccd,mds,toc`
-(a folder or archive with one of those is one game, imported whole; this needs
-NBT Manager dev123 or later).
+(a folder or archive with one of those is one game, imported whole). It needs
+NBT Manager 0.2.0 or later.
 PCSX ReARMed reports the game played as its status. NBT Manager keeps its
 standard error as its log (shown, shared and cleared from the phone app); the
 Debug log setting adds tracing and the core's debug messages.
