@@ -1,7 +1,8 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # The package description for tools/package.py (NBTFoundry/manager): one argument
 # per line. `make package` and the release workflow both use it; they add the
-# version, sequence, key, output and executable. Bridge 1.5: the discs and BIOS
+# version, sequence, key, output and executable. Bridge 1.7: the payload is the
+# guest, run by NBT Manager's nbt-runner (runner); the discs and BIOS
 # files come through `files` (from a USB stick: the phone sends at most 64 MiB);
 # `|folders=`: a folder or zip archive holding a playlist or a cue sheet (or
 # .ccd, .mds, .toc) is one game, imported whole.
@@ -10,9 +11,9 @@ pcsx
 --compat
 nbt_6.5_armv7
 --bridge
-1.5
+1.7
 --bridge-uses
-show,controller,files
+show,controller,files,runner
 --bridge-optional
 status,live-settings,gamepad
 --bridge-files

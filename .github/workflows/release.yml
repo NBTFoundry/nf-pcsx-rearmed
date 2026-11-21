@@ -1,10 +1,10 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # Signed package from a vMAJOR.MINOR.PATCH tag: NBT Manager's application release
-# workflow builds it in the private QNX image, signs it with the apps key (this
+# workflow builds the guest on a plain runner with the NBT toolchain release the
+# SDK pins (qnx: false, no private image), signs it with the apps key (this
 # repository's "release" environment, secret APPS_SIGNING_KEY, after approval) and
-# publishes pcsx-X.Y.Z.nbt. The executable is the SDK's nbt-runner (built with the
-# image's QNX 6.5 SP1 SDP) with the guest appended (built with the NBT toolchain
-# release the SDK pins): PCSX ReARMed is GPL and never links QNX code. The tag gives
+# publishes pcsx-X.Y.Z.nbt. NBT Manager's nbt-runner runs it (bridge 1.7, runner):
+# PCSX ReARMed is GPL and never links QNX code. The tag gives
 # the version and the sequence; release/package.args describes the package;
 # release/sdk.ref names the NBTFoundry/sdk commit it builds against (ci.yml reads the
 # same file).
@@ -37,7 +37,7 @@ jobs:
 
   release:
     needs: pins
-    uses: NBTFoundry/manager/.github/workflows/app-release.yml@dbb9706024a591243cde9456ff321a2bad2cf9e2 # manager main
+    uses: NBTFoundry/manager/.github/workflows/app-release.yml@de11ef614d47ef94170cf2711477030278c981b9 # manager runner-ships
     permissions:
       contents: write
       packages: read
@@ -45,5 +45,6 @@ jobs:
     secrets: inherit
     with:
       sdk-ref: ${{ needs.pins.outputs.sdk }}
-      build: make -C ../sdk toolchain && make -j"$(nproc)" guest-bundle
-      payload: build/nbt-pcsx-bundle
+      qnx: false
+      build: make -j"$(nproc)" guest
+      payload: build/nbt-pcsx.guest

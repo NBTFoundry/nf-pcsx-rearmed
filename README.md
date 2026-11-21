@@ -186,20 +186,21 @@ BIOS is needed.
 
 Head unit: PCSX ReARMed is GPL, so the application is a **guest**
 (`sdk/docs/native-apps.md`): built with the NBT toolchain, without any QNX
-file, and run by the SDK's `nbt-runner` as its own process.
+file, and run as its own process by the `nbt-runner` NBT Manager ships
+(bridge 1.7, `runner`).
 
 ```sh
 make -j"$(nproc)" guest                                  # build/nbt-pcsx.guest
-make QNX_ENV=… QNX_SCREEN_LIBDIR=… guest-bundle          # nbt-runner + the guest
+make APP_KEY=/path/to/apps-signing-key.pem package       # build/pcsx-<version>.nbt
 make QNX_ENV=… QNX_SCREEN_LIBDIR=… vm-test               # QNX 6.5 SP1 under QEMU
-make QNX_ENV=… QNX_SCREEN_LIBDIR=… APP_KEY=/path/to/apps-signing-key.pem package
 ```
 
-`QNX_ENV` and `QNX_SCREEN_LIBDIR` build the SDK's `nbt-runner` only. `package`
-signs `build/pcsx-<version>.nbt` with NBT Manager's packer
+`package` signs the guest with NBT Manager's packer
 (`../manager/tools/package.py`, or `NBT_MGR_DIR`), described by
-`release/package.args`, from the bundle. `make notice` writes
-`legal/NOTICE.txt`.
+`release/package.args`. `QNX_ENV` and `QNX_SCREEN_LIBDIR` build the SDK's
+`nbt-runner` for the VM test only: neither the package nor its CI release
+(NBT Manager's `app-release.yml` with `qnx: false`, a plain runner) needs the
+QNX SDP. `make notice` writes `legal/NOTICE.txt`.
 
 ### PCSX ReARMed on the NBT toolchain
 

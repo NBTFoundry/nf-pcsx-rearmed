@@ -11,8 +11,9 @@ APP_KEY ?=
 # $(BUILD_DIR)/sdk; the manager is only needed for packaging.
 NBT_SDK_DIR ?= ../sdk
 NBT_MGR_DIR ?= ../manager
-# The QNX SDP builds only the SDK's nbt-runner, for the bundle and the VM
-# test: the application itself is GPL, so it is a guest, never a QNX build.
+# The QNX SDP builds only the SDK's nbt-runner, for the VM test: the
+# application itself is GPL, so it is a guest, never a QNX build. On the car,
+# NBT Manager's own nbt-runner runs the guest (bridge 1.7, runner).
 QNX_ENV ?=
 QNX_SCREEN_LIBDIR ?=
 
@@ -77,7 +78,7 @@ ASAN_FLAGS := -O1 -g -fsanitize=address -fno-omit-frame-pointer
 # archive only what is already wanted).
 CORE_HOST_LDLIBS := -lm -lpthread
 
-.PHONY: all host test test-asan check-static-init format guest guest-bundle vm-test package notice clean
+.PHONY: all host test test-asan check-static-init format guest vm-test package notice clean
 
 all: host test
 
@@ -163,14 +164,6 @@ $(GUEST_APP): $(GUEST_OBJ) $(NBT_SDK_MOD_DEPS)
 
 guest: $(GUEST_APP)
 
-# For today's NBT Manager, which does not run payloads itself yet: nbt-runner
-# with the guest appended (needs QNX_ENV and QNX_SCREEN_LIBDIR).
-GUEST_BUNDLE := $(BUILD_DIR)/nbt-pcsx-bundle
-$(GUEST_BUNDLE): $(GUEST_APP) $(NBT_SDK_RUNNER)
-	$(NBT_SDK_BUNDLE) $(GUEST_APP) $@
-
-guest-bundle: $(GUEST_BUNDLE)
-
 # --- The guest in QNX 6.5 SP1 under QEMU (the SDK's tools/qnx65-vm; no GPU,
 # no sound: both faked): a health check, then the test disc of
 # tests/test_pcsx.py played through the ARM dynarec, which must map its
@@ -195,7 +188,7 @@ vm-test: $(NBT_SDK_RUNNER) $(GUEST_APP) $(VM_DISC)
 		$^
 
 # --- The signed package (release/package.args describes it) ---
-PACKAGE_INPUT ?= $(GUEST_BUNDLE)
+PACKAGE_INPUT ?= $(GUEST_APP)
 PACKAGE := $(BUILD_DIR)/pcsx-$(APP_VERSION).nbt
 
 package: $(PACKAGE_INPUT)
