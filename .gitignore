@@ -5,3 +5,8 @@ build/
 *.nbt
 __pycache__/
 *.pyc
+# Releases, sums and signing keys: never in the repository (CI reads APPS_SIGNING_KEY).
+*.nbtr
+*SHA256SUMS*
+*.pem
+*.key
