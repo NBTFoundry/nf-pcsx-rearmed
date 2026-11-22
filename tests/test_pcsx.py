@@ -315,6 +315,12 @@ class PackageTest(unittest.TestCase):
             for setting in ("region|Region|auto|auto,ntsc,pal", "bios|BIOS|auto|auto,hle",
                             "dynarec|Dynarec|on|on,off", "frameskip|Frame skip|off|off,1,2"):
                 self.assertIn(f"setting={setting}\n", manifest)
+            # What the phone app shows before an install: upstream's version, project
+            # and licence, then text.
+            self.assertRegex(manifest, r"\nproperty=PCSX ReARMed\|r[0-9]+ \([0-9a-f]{7}\)\n")
+            self.assertIn("property=Project|PCSX ReARMed (https://github.com/notaz/pcsx_rearmed)\n", manifest)
+            self.assertIn("property=Licence|GPL-2.0-or-later\n", manifest)
+            self.assertIn("\ntext=\n", manifest)
 
 
 if __name__ == "__main__":

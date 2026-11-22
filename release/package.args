@@ -38,3 +38,21 @@ sound|Sound|on|on,off
 show_fps|Show FPS|off|off,on
 --setting
 debug_log|Debug log|off|off,on
+# What the phone app shows before an install (NBT Manager's PROTOCOL.md,
+# "Package information"): the PCSX ReARMed version the pin builds
+# (tools/package_version.py: `make package-args`; `make test` checks it), the
+# project, the licence and the notices.
+--property
+PCSX ReARMed|r26 (fa1387b)
+--property
+Project|PCSX ReARMed (https://github.com/notaz/pcsx_rearmed)
+--property
+Licence|GPL-2.0-or-later
+--text
+PlayStation games by PCSX ReARMed, with NBTFoundry's changes for NBT Manager.
+--text=
+--text
+No BIOS or game is included.
+--text=
+--text
+Source, licences and notices: https://github.com/NBTFoundry/nf-pcsx-rearmed

@@ -199,7 +199,10 @@ make QNX_ENV=… QNX_SCREEN_LIBDIR=… vm-test               # QNX 6.5 SP1 under
 
 `package` signs the guest with NBT Manager's packer
 (`../manager/tools/package.py`, or `NBT_MGR_DIR`), described by
-`release/package.args`. `QNX_ENV` and `QNX_SCREEN_LIBDIR` build the SDK's
+`release/package.args`. It also carries what the phone app shows before an install
+(the PCSX ReARMed version, the project, the licence, notices); `make package-args`
+writes the version the pin builds, and `make test` fails when it lags.
+`QNX_ENV` and `QNX_SCREEN_LIBDIR` build the SDK's
 `nbt-runner` for the VM test only: neither the package nor its CI release
 (NBT Manager's `app-release.yml` with `qnx: false`, a plain runner) needs the
 QNX SDP. `make notice` writes `legal/NOTICE.txt`.
