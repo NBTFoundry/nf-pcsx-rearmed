@@ -22,6 +22,12 @@ CXX ?= g++
 
 NBT_SDK_BUILD_DIR := $(abspath $(BUILD_DIR))/sdk
 include $(NBT_SDK_DIR)/nbt-sdk.mk
+# Each kind of object rebuilds when its compile command changes (the SDK's
+# nbt-stamp.mk; the stamps are written at the end of this file).
+stamp = $(OBJ_DIR)/$(1).stamp
+ifeq ($(value nbt_stamp),)
+$(error $(NBT_SDK_ROOT) has no nbt-stamp.mk: update that SDK checkout)
+endif
 
 # --- PCSX ReARMed: built by upstream's own Makefile.libretro, unmodified ---
 # Upstream writes its objects next to its sources and sets flags per object,
@@ -39,13 +45,23 @@ CORE_MAKE_ARGS := platform=unix STATIC_LINKING=1 TARGET=$(CORE_LIB_NAME) BUILTIN
 core_dir = $(BUILD_DIR)/core/$(1)
 core_lib = $(call core_dir,$(1))/$(CORE_LIB_NAME)
 
-# $(call core_build,kind,environment,make arguments)
+# Our command line's CFLAGS and CXXFLAGS (make passes them on in MAKEFLAGS)
+# would replace upstream's own instead of adding to them: they stay ours.
+CORE_MAKEFLAGS = MAKEFLAGS='$(filter-out CFLAGS=% CXXFLAGS=%,$(MAKEFLAGS))'
+# $(call core_build,kind): upstream's make with CORE_ENV_<kind> in its
+# environment and CORE_ARGS_<kind> as arguments. When those or the toolchain
+# (the kind's core stamp) changed since the copy's objects were built, they go
+# first: upstream's make would keep them.
 define core_build
 	@mkdir -p $(call core_dir,$(1))
+	@if ! cmp -s $(call stamp,core-$(1)) $(call core_dir,$(1))/.stamp \
+		|| test $(call stamp,core-$(1)) -nt $(call core_dir,$(1))/.stamp; then \
+		test ! -f $(call core_dir,$(1))/.stamp || echo "core $(1): build stamp changed, rebuilding it"; \
+		find $(call core_dir,$(1)) -name '*.o' -delete; cp $(call stamp,core-$(1)) $(call core_dir,$(1))/.stamp; fi
 	tar -C $(CORE_SRC) --exclude=.git --exclude='*.o' --exclude='*.a' --exclude=./include/revision.h -cf - . \
 		| tar -C $(call core_dir,$(1)) -xf -
-	cd $(call core_dir,$(1)) && GIT_DIR=$(CORE_GIT_DIR) $(2) $(MAKE) --no-print-directory -f Makefile.libretro \
-		$(CORE_MAKE_ARGS) $(3)
+	cd $(call core_dir,$(1)) && GIT_DIR=$(CORE_GIT_DIR) $(CORE_ENV_$(1)) $(CORE_MAKEFLAGS) $(MAKE) --no-print-directory \
+		-f Makefile.libretro $(CORE_MAKE_ARGS) $(CORE_ARGS_$(1))
 endef
 
 .PHONY: FORCE
@@ -53,17 +69,22 @@ FORCE:
 
 # Host and sanitizer builds: the interpreter (upstream's x86 dynarec is
 # lightrec, which the head unit does not use).
+CORE_ENV_host := CFLAGS="-DNO_DYLIB"
+CORE_ARGS_host := DYNAREC=0
 $(call core_lib,host): FORCE
-	$(call core_build,host,CFLAGS="-DNO_DYLIB",DYNAREC=0)
+	$(call core_build,host)
 
+CORE_ENV_asan := CFLAGS="-DNO_DYLIB -fno-omit-frame-pointer"
+CORE_ARGS_asan := DYNAREC=0 DEBUG_ASAN=1
 $(call core_lib,asan): FORCE
-	$(call core_build,asan,CFLAGS="-DNO_DYLIB -fno-omit-frame-pointer",DYNAREC=0 DEBUG_ASAN=1)
+	$(call core_build,asan)
 
 # The guest: the ARM dynarec (ari64) in ARM state, no NEON, with the NBT
 # toolchain's flags and runtime (sdk/module/flags.mk).
+CORE_ENV_guest = CFLAGS="$(NBT_MOD_CFLAGS) -DNO_DYLIB"
+CORE_ARGS_guest = CC="$(NBT_MOD_CC)" CXX="$(NBT_MOD_CXX)" AR="$(NBT_MOD_AR)" ARCH=arm DYNAREC=ari64 HAVE_NEON_ASM=0
 $(call core_lib,guest): FORCE | nbt-sdk-mod
-	$(call core_build,guest,CFLAGS="$(NBT_MOD_CFLAGS) -DNO_DYLIB",CC="$(NBT_MOD_CC)" CXX="$(NBT_MOD_CXX)" \
-		AR="$(NBT_MOD_AR)" ARCH=arm DYNAREC=ari64 HAVE_NEON_ASM=0)
+	$(call core_build,guest)
 
 # --- Ours: the application on the SDK's libretro host ---
 APP_SRC := src/controls.cpp src/main.cpp
@@ -83,7 +104,7 @@ CORE_HOST_LDLIBS := -lm -lpthread
 all: host test
 
 # --- Host (Linux, X11) ---
-$(OBJ_DIR)/host/src/%.o: src/%.cpp
+$(OBJ_DIR)/host/src/%.o: src/%.cpp $(call stamp,host)
 	@mkdir -p $(dir $@)
 	$(CXX) $(APP_INC) $(APP_CXXFLAGS) -MMD -MP -c $< -o $@
 
@@ -95,7 +116,7 @@ host: $(HOST_APP) $(BUILD_DIR)/controls-test
 
 # --- Sanitizer build: the core under AddressSanitizer (upstream's
 # DEBUG_ASAN), ours under UBSan too ---
-$(OBJ_DIR)/asan/src/%.o: src/%.cpp
+$(OBJ_DIR)/asan/src/%.o: src/%.cpp $(call stamp,asan)
 	@mkdir -p $(dir $@)
 	$(CXX) $(APP_INC) $(APP_CXXFLAGS) $(ASAN_FLAGS) -fsanitize=undefined -MMD -MP -c $< -o $@
 
@@ -104,7 +125,7 @@ $(ASAN_APP): $(call app_objs,asan) $(NBT_SDK_FRONT_ASAN_LIBS) $(call core_lib,as
 		$(call core_lib,asan) $(LDFLAGS) $(NBT_SDK_HOST_LDLIBS) $(CORE_HOST_LDLIBS) -o $@
 
 # --- Tests ---
-$(OBJ_DIR)/host/tests/%.o: tests/%.cpp
+$(OBJ_DIR)/host/tests/%.o: tests/%.cpp $(call stamp,host)
 	@mkdir -p $(dir $@)
 	$(CXX) $(APP_INC) $(APP_CXXFLAGS) -MMD -MP -c $< -o $@
 
@@ -153,7 +174,7 @@ GUEST_APP_LICENSE := GPL-2.0-or-later
 MOD_APP_CXXFLAGS := $(NBT_MOD_CXXFLAGS) -O2 -std=c++11 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
 	$(APP_INC)
 
-$(OBJ_DIR)/guest/src/%.o: src/%.cpp | nbt-sdk-mod
+$(OBJ_DIR)/guest/src/%.o: src/%.cpp $(call stamp,guest) | nbt-sdk-mod
 	@mkdir -p $(dir $@)
 	$(NBT_MOD_CXX) $(MOD_APP_CXXFLAGS) -MMD -MP -c $< -o $@
 
@@ -212,3 +233,11 @@ clean:
 
 DEPS := $(shell find $(OBJ_DIR) -name '*.d' 2>/dev/null)
 -include $(DEPS)
+
+$(call nbt_stamp,$(call stamp,host),$(CXX) $(APP_INC) $(APP_CXXFLAGS),$(CXX))
+$(call nbt_stamp,$(call stamp,asan),$(CXX) $(APP_INC) $(APP_CXXFLAGS) $(ASAN_FLAGS) -fsanitize=undefined,$(CXX))
+$(call nbt_stamp,$(call stamp,guest),$(NBT_MOD_CXX) $(MOD_APP_CXXFLAGS),,$(NBT_TOOLCHAIN)/VERSION)
+$(call nbt_stamp,$(call stamp,core-host),$(CORE_MAKE_ARGS) $(CORE_ENV_host) $(CORE_ARGS_host),$(CC) $(CXX))
+$(call nbt_stamp,$(call stamp,core-asan),$(CORE_MAKE_ARGS) $(CORE_ENV_asan) $(CORE_ARGS_asan),$(CC) $(CXX))
+$(call nbt_stamp,$(call stamp,core-guest),$(CORE_MAKE_ARGS) $(CORE_ENV_guest) $(CORE_ARGS_guest),, \
+	$(NBT_TOOLCHAIN)/VERSION)
