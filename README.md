@@ -29,8 +29,7 @@ Part of [NBTFoundry](https://github.com/NBTFoundry):
 [sdk](https://github.com/NBTFoundry/sdk) ·
 [mobile-app](https://github.com/NBTFoundry/mobile-app) ·
 [installer](https://github.com/NBTFoundry/installer) ·
-[nf-doom](https://github.com/NBTFoundry/nf-doom) ·
-[nf-snes9x](https://github.com/NBTFoundry/nf-snes9x)
+[toolchains](https://github.com/NBTFoundry/toolchains)
 
 Not affiliated with or endorsed by BMW AG or Sony Interactive Entertainment.
 BMW, iDrive and NBT are trademarks of BMW AG; PlayStation is a trademark of
@@ -161,8 +160,9 @@ Manager's `nbt-runner`) and declares bridge 1.7: `show`, `controller`, `files`
 and `runner` required, `status`, `live-settings` and `gamepad` optional, and
 the files policy
 `cue,bin,img,iso,chd,pbp,m3u,mdf,mds,ccd,sub,sbi,toc,cbn,exe|2048|16384|folders=m3u,cue,ccd,mds,toc`
-(a folder or archive with one of those is one game, imported whole). It needs
-NBT Manager 0.2.0 or later.
+(a folder or archive with one of those is one game, imported whole). It also
+carries what the phone app shows before an install (the PCSX ReARMed version,
+the project, the licence, notices), so it needs NBT Manager 0.3.1 or later.
 PCSX ReARMed reports the game played as its status. NBT Manager keeps its
 standard error as its log (shown, shared and cleared from the phone app); the
 Debug log setting adds tracing and the core's debug messages.
@@ -199,13 +199,10 @@ make QNX_ENV=… QNX_SCREEN_LIBDIR=… vm-test               # QNX 6.5 SP1 under
 
 `package` signs the guest with NBT Manager's packer
 (`../manager/tools/package.py`, or `NBT_MGR_DIR`), described by
-`release/package.args`. It also carries what the phone app shows before an install
-(the PCSX ReARMed version, the project, the licence, notices); `make package-args`
-writes the version the pin builds, and `make test` fails when it lags.
-`QNX_ENV` and `QNX_SCREEN_LIBDIR` build the SDK's
-`nbt-runner` for the VM test only: neither the package nor its CI release
-(NBT Manager's `app-release.yml` with `qnx: false`, a plain runner) needs the
-QNX SDP. `make notice` writes `legal/NOTICE.txt`.
+`release/package.args`; `make package-args` writes the PCSX ReARMed version
+the pin builds, and `make test` fails when it lags. `QNX_ENV` and
+`QNX_SCREEN_LIBDIR` build the SDK's `nbt-runner` for the VM test only, the
+only use of the QNX SDP. `make notice` writes `legal/NOTICE.txt`.
 
 ### PCSX ReARMed on the NBT toolchain
 
@@ -228,6 +225,17 @@ until upstream takes them:
   unaligned access (`__ARM_FEATURE_UNALIGNED`), the C version is used. The
   QNX 6.5 VM faults on unaligned accesses.
 
+## Releases
+
+`.github/workflows/ci.yml` runs the host tests, the same under ASan/UBSan and the
+guest build on every push and pull request. A `vX.Y.Z` tag runs
+`.github/workflows/release.yml`: NBT Manager's application release workflow
+builds the guest on a plain runner with the NBT toolchain (no QNX SDP, no
+private image), signs it with the apps key after a maintainer approves the run
+(the `release` environment, secret `APPS_SIGNING_KEY`, tags `v*` only) and
+publishes `pcsx-X.Y.Z.nbt`, sequence `X*1000000 + Y*1000 + Z`.
+`release/sdk.ref` is the SDK commit both build against.
+
 ## To confirm on the head unit
 
 - Full speed with sound (Show FPS): otherwise Frame skip, the GPU thread, then
@@ -246,7 +254,7 @@ until upstream takes them:
 | `src/main.cpp` | The application: the SDK's libretro host with PCSX ReARMed's settings |
 | `src/controls.*` | The PlayStation layout for each pad family, the iDrive controller and the keyboard |
 | `tests/` | Controls unit test (`controls_test.cpp`), play and package tests (`test_pcsx.py`) |
-| `tools/make_notice.py` | Writes `legal/NOTICE.txt` |
+| `tools/` | PCSX ReARMed's version for the package (`package_version.py`), notices (`make_notice.py`) |
 | `release/` | The package description and the SDK commit to build against |
 
 ## License
