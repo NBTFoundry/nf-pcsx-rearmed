@@ -38,7 +38,7 @@ games and BIOS files you own.
 
 ## Status
 
-Built and tested on the desktop and in QNX 6.5 SP1 under QEMU; not yet tested
+Built and tested on the desktop and in the SDK's VM under QEMU; not yet tested
 in a car.
 
 ## Adding games
@@ -155,7 +155,7 @@ Changed from the phone app or NBT Manager's settings page; they apply at once.
 
 ## Bridge
 
-The package carries the guest (built without the QNX SDP, run by NBT
+The package carries the guest (built with the NBT toolchain, run by NBT
 Manager's `nbt-runner`) and declares bridge 1.7: `show`, `controller`, `files`
 and `runner` required, `status`, `live-settings` and `gamepad` optional, and
 the files policy
@@ -187,22 +187,22 @@ their own PlayStation program, as a PS-EXE and on ISO 9660 discs; no game or
 BIOS is needed.
 
 Head unit: PCSX ReARMed is GPL, so the application is a **guest**
-(`sdk/docs/native-apps.md`): built with the NBT toolchain, without any QNX
-file, and run as its own process by the `nbt-runner` NBT Manager ships
-(bridge 1.7, `runner`).
+(`sdk/docs/native-apps.md`): built with the NBT toolchain and run as its own
+process by the `nbt-runner` NBT Manager ships (bridge 1.7, `runner`).
 
 ```sh
 make -j"$(nproc)" guest                                  # build/nbt-pcsx.guest
 make APP_KEY=/path/to/apps-signing-key.pem package       # build/pcsx-<version>.nbt
-make QNX_ENV=… QNX_SCREEN_LIBDIR=… vm-test               # QNX 6.5 SP1 under QEMU
+make vm-test                                             # the SDK's VM under QEMU
 ```
 
 `package` signs the guest with NBT Manager's packer
 (`../manager/tools/package.py`, or `NBT_MGR_DIR`), described by
-`release/package.args`; `make package-args` writes the PCSX ReARMed version
-the pin builds, and `make test` fails when it lags. `QNX_ENV` and
-`QNX_SCREEN_LIBDIR` build the SDK's `nbt-runner` for the VM test only, the
-only use of the QNX SDP. `make notice` writes `legal/NOTICE.txt`.
+`release/package.args`; `make package-args` writes the PCSX ReARMed version the
+pin builds, and `make test` fails when it lags. `vm-test` runs it in the SDK's
+VM, with the SDK's own `nbt-runner` (`sdk/docs/native-apps.md`, "Testing without
+a head unit", says what building it takes). `make notice` writes
+`legal/NOTICE.txt`.
 
 ### PCSX ReARMed on the NBT toolchain
 
@@ -223,26 +223,26 @@ until upstream takes them:
   assembler rejects, written `ldmfdeq`;
 - the recompiler's assembly `get_reg` loads unaligned words; without
   unaligned access (`__ARM_FEATURE_UNALIGNED`), the C version is used. The
-  QNX 6.5 VM faults on unaligned accesses.
+  SDK's VM faults on unaligned accesses.
 
 ## Releases
 
-`.github/workflows/ci.yml` runs the host tests, the same under ASan/UBSan and the
-guest build on every push and pull request. A `vX.Y.Z` tag runs
+`.github/workflows/ci.yml` runs the host tests, the same under ASan/UBSan and
+the guest build on every push and pull request. A `vX.Y.Z` tag runs
 `.github/workflows/release.yml`: NBT Manager's application release workflow
-builds the guest on a plain runner with the NBT toolchain (no QNX SDP, no
-private image), signs it with the apps key after a maintainer approves the run
-(the `release` environment, secret `APPS_SIGNING_KEY`, tags `v*` only) and
-publishes `pcsx-X.Y.Z.nbt`, sequence `X*1000000 + Y*1000 + Z`.
-`release/sdk.ref` is the SDK commit both build against:
-[SDK 0.1.0](https://github.com/NBTFoundry/sdk/releases/tag/v0.1.0).
+builds the guest on a plain runner with the NBT toolchain (no private image),
+signs it with the apps key after a maintainer approves the run (the `release`
+environment, secret `APPS_SIGNING_KEY`, tags `v*` only) and publishes
+`pcsx-X.Y.Z.nbt`, sequence `X*1000000 + Y*1000 + Z`. `release/sdk.ref` is the
+SDK commit both build against: [SDK
+0.1.0](https://github.com/NBTFoundry/sdk/releases/tag/v0.1.0).
 
 ## To confirm on the head unit
 
 - Full speed with sound (Show FPS): otherwise Frame skip, the GPU thread, then
   NEON (`port-perf`) once the car session allows it.
-- The recompiler's memory (executable `.bss`, `__clear_cache`) on the car's
-  QNX, as in the VM.
+- The recompiler's memory (executable `.bss`, `__clear_cache`) on the car,
+  as in the VM.
 - Disc images read from the hard disk while playing; a disc swap.
 - The profile follows a pad plugged in and out; the iDrive controller plays
   without one.

@@ -1,8 +1,7 @@
 # SPDX-License-Identifier: GPL-2.0-or-later
 # The host build and tests (plain and with ASan/UBSan, under Xvfb) against the
 # NBTFoundry/sdk commit in release/sdk.ref, and the guest built with the NBT
-# toolchain release that SDK pins. Only the QNX 6.5 VM test needs the QNX SDP
-# (for nbt-runner); it runs locally (README).
+# toolchain release that SDK pins. The VM test runs locally (README).
 name: ci
 
 on:

@@ -11,12 +11,6 @@ APP_KEY ?=
 # $(BUILD_DIR)/sdk; the manager is only needed for packaging.
 NBT_SDK_DIR ?= ../sdk
 NBT_MGR_DIR ?= ../manager
-# The QNX SDP builds only the SDK's nbt-runner, for the VM test: the
-# application itself is GPL, so it is a guest, never a QNX build. On the car,
-# NBT Manager's own nbt-runner runs the guest (bridge 1.7, runner).
-QNX_ENV ?=
-QNX_SCREEN_LIBDIR ?=
-
 CC ?= gcc
 CXX ?= g++
 
@@ -166,10 +160,9 @@ check-static-init: $(call app_objs,host)
 format:
 	clang-format -i src/*.cpp src/*.hpp tests/*.cpp
 
-# --- The guest: built without the QNX SDP, run by nbt-runner as its own
-# process (sdk/guest). PCSX ReARMed is GPL: the QNX licence forbids linking
-# it with QNX code, so it is a guest, never a module (the licence gate
-# checks). ---
+# --- The guest: built with the NBT toolchain, run by nbt-runner as its own
+# process (sdk/guest). PCSX ReARMed is GPL, so it must be a guest, never a
+# module (the SDK's licence gate checks; sdk/docs/native-apps.md). ---
 GUEST_APP := $(BUILD_DIR)/nbt-pcsx.guest
 GUEST_APP_LICENSE := GPL-2.0-or-later
 MOD_APP_CXXFLAGS := $(NBT_MOD_CXXFLAGS) -O2 -std=c++11 -Wall -Wextra -Werror -fno-exceptions -fno-rtti \
@@ -186,8 +179,8 @@ $(GUEST_APP): $(GUEST_OBJ) $(NBT_SDK_MOD_DEPS)
 
 guest: $(GUEST_APP)
 
-# --- The guest in QNX 6.5 SP1 under QEMU (the SDK's tools/qnx65-vm; no GPU,
-# no sound: both faked): a health check, then the test disc of
+# --- The guest in the SDK's VM under QEMU (no GPU, no sound: both faked;
+# sdk/docs/native-apps.md for what its nbt-runner needs): a health check, then the test disc of
 # tests/test_pcsx.py played through the ARM dynarec, which must map its
 # memory, draw frames and stop cleanly. ---
 VM_DISC := $(BUILD_DIR)/vm/Test.iso
@@ -200,7 +193,8 @@ $(VM_DISC): tests/test_pcsx.py
 		open(sys.argv[1], "wb").write(test_pcsx.iso_disc("TEST"))' $@
 
 vm-test: $(NBT_SDK_RUNNER) $(GUEST_APP) $(VM_DISC)
-	QEMU_RUN_SECS=180 $(NBT_SDK_ROOT)/tools/qnx65-vm/run.sh \
+	@test -n "$(NBT_SDK_VM_RUN)" || { echo "$(NBT_SDK_ROOT) has no VM: update that SDK checkout"; exit 1; }
+	QEMU_RUN_SECS=180 $(NBT_SDK_VM_RUN) \
 		-c "NBT_LAUNCH=check NBT_DATA_DIR=/dev/shmem nbt-runner --nbt-payload /proc/boot/$(notdir $(GUEST_APP)) &" \
 		-c "waitfor /none 10" -c "slay -s TERM nbt-runner" -c "waitfor /none 3" \
 		-c "$(VM_PLAY) nbt-runner --nbt-payload /proc/boot/$(notdir $(GUEST_APP)) --game Test.iso &" \
